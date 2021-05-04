@@ -2,7 +2,7 @@ package appLifeManage
 
 import (
 	"context"
-	"fmt"
+	"github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
 	"net/http"
 	"os"
@@ -10,21 +10,11 @@ import (
 )
 
 type SigintHandler struct {
-	stop func()
+	cancel func()
 }
 
 func (si *SigintHandler) Run() {
-	si.stop()
-}
-
-type SighupHandler struct {
-	exitChan chan struct{}
-	stopChan chan struct{}
-}
-
-func (sh *SighupHandler) Run() {
-	close(sh.stopChan)
-	sh.exitChan <- struct{}{}
+	si.cancel()
 }
 
 func Run() {
@@ -32,20 +22,24 @@ func Run() {
 	ctx, cancel := context.WithCancel(context.Background())
 	g, c := errgroup.WithContext(ctx)
 
-	exitChan := make(chan struct{})
-	stop := make(chan struct{})
-
-	s := NewSignal()
+	s := NewSignal(make(chan os.Signal, 1))
 	s.Add(syscall.SIGINT, &SigintHandler{
-		stop: cancel,
+		cancel: cancel,
 	})
-	s.Add(syscall.SIGHUP, &SighupHandler{
-		exitChan: exitChan,
-		stopChan: stop,
+
+	s.Reg([]os.Signal{syscall.SIGINT})
+	g.Go(func() error {
+		for {
+			select {
+			case sig := <-s.GetSignal():
+				s.Handle(sig)
+			case <-c.Done():
+				return c.Err()
+			}
+
+		}
 	})
-	s.Reg([]os.Signal{syscall.SIGHUP, syscall.SIGINT})
-	go s.Handle()
-	for _, s := range []Server{ServerBiz(":9834"), ServerDebug(":8789")} {
+	for _, s := range []Server{ServerBiz(":9834"), ServerDebug(":9835")} {
 		s := s
 		g.Go(func() error {
 			return s.Start()
@@ -55,8 +49,9 @@ func Run() {
 			return s.Stop()
 		})
 	}
-	err := g.Wait()
-	fmt.Println(err)
+	if err := g.Wait(); err != nil && !errors.Is(err, context.Canceled) {
+		panic(err)
+	}
 
 }
 

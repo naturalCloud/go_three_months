@@ -17,10 +17,10 @@ type Signal struct {
 	sigChan chan os.Signal
 }
 
-func NewSignal() *Signal {
+func NewSignal(sigChan chan os.Signal) *Signal {
 	return &Signal{
 		handler: make(map[os.Signal]SignalHandle),
-		sigChan: make(chan os.Signal),
+		sigChan: sigChan,
 	}
 }
 
@@ -41,12 +41,15 @@ func (s *Signal) Reg(signals []os.Signal) {
 	signal.Notify(s.sigChan, signals...)
 }
 
-func (s *Signal) Handle() {
-	for value := range s.sigChan {
-		if f, ok := s.handler[value]; ok {
-			f.Run()
-		} else {
-			fmt.Println(value)
-		}
+func (s *Signal) Handle(signal os.Signal) {
+	if f, ok := s.handler[signal]; ok {
+		f.Run()
+	} else {
+		fmt.Println(signal)
 	}
+
+}
+
+func (s *Signal) GetSignal() chan os.Signal {
+	return s.sigChan
 }
