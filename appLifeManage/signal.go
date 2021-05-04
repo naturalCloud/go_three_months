@@ -5,7 +5,6 @@ import (
 	"os"
 	"os/signal"
 	"sync"
-	"syscall"
 )
 
 type SignalHandle interface {
@@ -19,7 +18,10 @@ type Signal struct {
 }
 
 func NewSignal() *Signal {
-	return &Signal{handler: make(map[os.Signal]SignalHandle), sigChan: make(chan os.Signal)}
+	return &Signal{
+		handler: make(map[os.Signal]SignalHandle),
+		sigChan: make(chan os.Signal),
+	}
 }
 
 func (s *Signal) Add(sigFlag os.Signal, handle SignalHandle) {
@@ -35,9 +37,8 @@ func (s *Signal) Remove(sigFlag os.Signal) {
 		delete(s.handler, sigFlag)
 	}
 }
-func (s *Signal) Reg() *Signal {
-	signal.Notify(s.sigChan, syscall.SIGHUP, syscall.SIGINT)
-	return s
+func (s *Signal) Reg(signals []os.Signal) {
+	signal.Notify(s.sigChan, signals...)
 }
 
 func (s *Signal) Handle() {
