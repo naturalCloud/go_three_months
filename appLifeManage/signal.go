@@ -37,7 +37,7 @@ func (s *Signal) Remove(sigFlag os.Signal) {
 		delete(s.handler, sigFlag)
 	}
 }
-func (s *Signal) Reg(signals []os.Signal) {
+func (s *Signal) Register(signals []os.Signal) {
 	signal.Notify(s.sigChan, signals...)
 }
 

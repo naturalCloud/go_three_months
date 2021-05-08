@@ -27,7 +27,7 @@ func Run() {
 		cancel: cancel,
 	})
 
-	s.Reg([]os.Signal{syscall.SIGINT})
+	s.Register([]os.Signal{syscall.SIGINT})
 	g.Go(func() error {
 		for {
 			select {
