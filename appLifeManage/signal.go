@@ -45,7 +45,7 @@ func (s *Signal) Handle(signal os.Signal) {
 	if f, ok := s.handler[signal]; ok {
 		f.Run()
 	} else {
-		fmt.Println(signal)
+		fmt.Printf("%d 没有对应处理函数", signal)
 	}
 
 }
