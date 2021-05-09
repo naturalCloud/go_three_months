@@ -23,8 +23,7 @@ func NewHttpServer(addr string, handler http.Handler) *HttpServer {
 }
 
 func (s *HttpServer) Start() error {
-	err := s.server.ListenAndServe()
-	return err
+	return s.server.ListenAndServe()
 }
 
 func (s *HttpServer) Stop() error {
