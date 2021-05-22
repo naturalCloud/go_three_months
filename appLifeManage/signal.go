@@ -24,7 +24,7 @@ func NewSignal(sigChan chan os.Signal) *Signal {
 	}
 }
 
-func (s *Signal) Add(sigFlag os.Signal, handle SignalHandle) {
+func (s *Signal) AddSignalHandler(sigFlag os.Signal, handle SignalHandle) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	s.handler[sigFlag] = handle
@@ -37,8 +37,8 @@ func (s *Signal) Remove(sigFlag os.Signal) {
 		delete(s.handler, sigFlag)
 	}
 }
-func (s *Signal) Register(signals []os.Signal) {
-	signal.Notify(s.sigChan, signals...)
+func (s *Signal) RegisterSignals() {
+	signal.Notify(s.sigChan, s.Signals()...)
 }
 
 func (s *Signal) Handle(signal os.Signal) {
@@ -52,4 +52,15 @@ func (s *Signal) Handle(signal os.Signal) {
 
 func (s *Signal) GetSignal() chan os.Signal {
 	return s.sigChan
+}
+
+func (s *Signal) Signals() []os.Signal {
+	var sis []os.Signal
+	for si, _ := range s.handler {
+		sis = append(sis, si)
+	}
+	if len(sis) <= 0 {
+		panic("must add handler")
+	}
+	return sis
 }

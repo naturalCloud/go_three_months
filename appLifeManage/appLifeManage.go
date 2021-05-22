@@ -23,11 +23,11 @@ func Run() {
 	g, c := errgroup.WithContext(ctx)
 
 	s := NewSignal(make(chan os.Signal, 1))
-	s.Add(syscall.SIGINT, &SigintHandler{
+	s.AddSignalHandler(syscall.SIGINT, &SigintHandler{
 		cancel: cancel,
 	})
 
-	s.Register([]os.Signal{syscall.SIGINT})
+	s.RegisterSignals()
 	g.Go(func() error {
 		for {
 			select {
